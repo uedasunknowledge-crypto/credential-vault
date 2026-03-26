@@ -1,0 +1,7 @@
+vault.enc
+vault/
+*.key
+.env
+.venv/
+__pycache__/
+*.pyc

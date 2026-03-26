@@ -1,0 +1,101 @@
+{
+  "handoff_version": "3.0",
+  "handoff_date": "2026-03-26",
+  "from": "Claude Code (no-tion-plan プロジェクト化セッション)",
+  "to": "次のAI（実装担当）",
+  "project": {
+    "name": "クレデンシャル管理基盤",
+    "repo": "uedasunknowledge-crypto/credential-vault",
+    "branch": "main",
+    "notion_url": "https://www.notion.so/32f7c8b10bd381bb9764e5cc8b12f18a"
+  },
+  "objective": "NH1上の暗号化vaultにID/PW/APIキーを一元管理し、secrets CLIで各プロジェクトから安全に取得できるようにする。",
+  "current_state": {
+    "summary": "リポジトリ作成・CLAUDE.md配置のみ。実装はこれから。P10(nh1-infra)の整備が先行条件。",
+    "completed": [
+      "GitHubリポジトリ作成",
+      "CLAUDE.md配置",
+      "Notionプロジェクト登録"
+    ],
+    "in_progress": [],
+    "blocked": [
+      {
+        "title": "P10 nh1-infra が未整備",
+        "detail": "vaultの配置先・デプロイ基盤が整ってから着手する",
+        "owner": "P10実装後に解除"
+      }
+    ]
+  },
+  "architecture": {
+    "vault_path": "/home/horizontalhold/auto_project/credential-vault/vault.enc",
+    "cli_interface": "secrets get/set/list/view",
+    "encryption": "マスターパスワード方式（方式は実装時に選定）",
+    "security_levels": {
+      "P1a": "システム情報（APIエンドポイント等）",
+      "P1b": "プロジェクト情報（GitHub Token, Notion Token等）",
+      "P2a": "個人情報系（担当者ログイン情報）",
+      "P2b": "財務情報系（freee APIキー等）",
+      "P3": "機微情報（オフライン管理推奨）"
+    }
+  },
+  "decisions": [
+    {
+      "topic": "vault保存場所",
+      "decision": "NH1ローカルのみ・GitHub非管理",
+      "reason": "認証情報を含むため絶対にGitHubに上げない"
+    },
+    {
+      "topic": "暗号化方式",
+      "decision": "未定（マスターパスワード方式を軸に検討）",
+      "reason": "人間が更新・参照・追加できることが必須条件"
+    },
+    {
+      "topic": "1Password CLIとの関係",
+      "decision": "類似機能をセルフホストで実装する",
+      "reason": "外部サービス依存を避け、NH1上で完結させる"
+    }
+  ],
+  "notes_for_next_ai": {
+    "uncommitted_thoughts": [
+      "暗号化ライブラリ候補: cryptography(Python), age, gpg",
+      "secrets CLIはPythonで実装するのが自然（NH1環境と統一）",
+      "vault.encの実データは絶対にAIに渡さない。設計・CLI実装のみAIが担当",
+      "将来的にP11(業務マスタ)・P10(nh1-infra)と連携してシステム設定を一元管理"
+    ],
+    "known_risks": [
+      "マスターパスワード紛失時のリカバリー手順が必要",
+      "NH1障害時のvaultバックアップ方法を検討する必要がある"
+    ],
+    "next_actions": [
+      {
+        "priority": "high",
+        "action": "P10 nh1-infra の整備完了を待つ",
+        "done_condition": "NH1のsystemd・デプロイ基盤が動作している"
+      },
+      {
+        "priority": "high",
+        "action": "暗号化方式の選定とvault設計",
+        "done_condition": "vault.enc形式・マスターPW方式が決定している"
+      },
+      {
+        "priority": "high",
+        "action": "secrets CLIの実装（get/set/list/view）",
+        "done_condition": "NH1上でsecrets getが動作する"
+      },
+      {
+        "priority": "medium",
+        "action": "既存プロジェクト（P8/P9等）の.envをvaultに移行",
+        "done_condition": "各プロジェクトがsecrets getでキーを取得している"
+      }
+    ]
+  },
+  "security": {
+    "data_classification": "P1a-P3",
+    "sensitive_data_handling": [
+      "vault.encはGitHub非管理・NH1ローカルのみ",
+      "マスターパスワードはAIに渡さない",
+      "実際の認証情報の入力は人間が行う"
+    ],
+    "secrets_touched": false
+  }
+}
