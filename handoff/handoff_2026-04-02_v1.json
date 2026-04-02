@@ -1,0 +1,258 @@
+{
+  "handoff_version": "3.0",
+  "handoff_date": "2026-04-02",
+  "from": "Codex",
+  "to": "次のAI/実装担当",
+  "project": {
+    "name": "クレデンシャル管理基盤",
+    "repo": "uedasunknowledge-crypto/credential-vault",
+    "branch": "main",
+    "related_issue_numbers": []
+  },
+  "objective": "credential-vault の初期設計を文章化し、実装に入る前の判断軸を固める。",
+  "current_state": {
+    "summary": "README と設計書に加えて、Python パッケージ骨格、複数アカウント前提のレコードモデル、CLI 骨格、record_id 採番、暗号化前ドキュメント操作、AES-256-GCM+scrypt の暗号化保存、主要 CLI コマンドの初期接続、business-master-sync 連携案を追加した。unlock セッションは未実装だが、Phase 1 の direct-password 運用はかなり形になった。",
+    "completed": [
+      "最新 handoff と ../no-tion-plan/TASKS.md を確認",
+      "P10 nh1-infra が 2026-03-27 に完了していることを確認",
+      "README.md を追加",
+      "docs/architecture.md に初期設計を追加",
+      "docs/expanded_requirements.md にライフサイクル管理と人間向け要件を追加",
+      "同一サービスの複数アカウント前提と business-master-sync 連携方針を追記",
+      "pyproject.toml と src/credential_vault の骨格を追加",
+      "tests に CLI/設定/モデルの雛形テストを追加",
+      "docs/business_master_sync_contract.md にスプシ連携案を追加",
+      "record_id 採番と暗号化前 vault ドキュメント操作を追加",
+      "crypto.py に AES-256-GCM + scrypt の暗号化処理を追加",
+      "vault_store.py に暗号化ファイル永続化を追加",
+      "cli.py に init/get/set/add/list/view/delete/revoke/due/audit/status/doctor の初期実装を追加",
+      "暗号化保存と CLI フローのテスト雛形を追加",
+      "render/exec による YAML/JSON テンプレート展開を追加",
+      "mail-invoice-processor 向けの連携ガイドとテンプレート例を追加"
+    ],
+    "in_progress": [
+      "unlock セッションの実装方針を direct-password 運用の次にどう載せるかの判断",
+      "CLI コマンドの細部挙動と error handling の磨き込み"
+    ],
+    "blocked": []
+  },
+  "artifacts": {
+    "changed_files": [
+      {
+        "path": "README.md",
+        "purpose": "リポジトリの目的、現状、参照ドキュメントを整理"
+      },
+      {
+        "path": "docs/architecture.md",
+        "purpose": "暗号化方式、vault 形式、CLI 仕様、段階実装案を定義"
+      },
+      {
+        "path": "docs/expanded_requirements.md",
+        "purpose": "API キー管理に加えて Web ログイン、更新期限、失効、通知、暗号化受け渡し方針、複数アカウント前提、business-master-sync 連携を整理"
+      },
+      {
+        "path": "docs/usage_examples.md",
+        "purpose": "複数アカウント前提の CLI 操作モックを追加"
+      },
+      {
+        "path": "docs/business_master_sync_contract.md",
+        "purpose": "business-master-sync のシート案と YAML 連携項目を定義"
+      },
+      {
+        "path": "docs/mail_invoice_processor_integration.md",
+        "purpose": "mail-invoice-processor の runtime YAML を vault 参照テンプレートへ置き換える手順を定義"
+      },
+      {
+        "path": "docs/examples/mail_invoice_processor.local.runtime.template.yaml",
+        "purpose": "mail-invoice-processor 向けの runtime YAML テンプレート例"
+      },
+      {
+        "path": "pyproject.toml",
+        "purpose": "Python パッケージ設定と CLI エントリポイントを定義"
+      },
+      {
+        "path": "src/credential_vault/config.py",
+        "purpose": "NH1 と開発環境を両立するパス解決ロジックを追加"
+      },
+      {
+        "path": "src/credential_vault/models.py",
+        "purpose": "複数アカウント前提の record モデルと重複識別ルールを追加"
+      },
+      {
+        "path": "src/credential_vault/cli.py",
+        "purpose": "CLI コマンド構造と引数仕様の骨格を追加"
+      },
+      {
+        "path": "src/credential_vault/identifiers.py",
+        "purpose": "record_type ごとの record_id 採番規則を追加"
+      },
+      {
+        "path": "src/credential_vault/vault_store.py",
+        "purpose": "暗号化前の vault ドキュメント操作と alias 解決を追加"
+      },
+      {
+        "path": "src/credential_vault/crypto.py",
+        "purpose": "AES-256-GCM + scrypt の暗号化と復号処理を追加"
+      },
+      {
+        "path": "src/credential_vault/template_render.py",
+        "purpose": "secret://record_ref#field 形式のテンプレート参照を解決する"
+      },
+      {
+        "path": "tests/test_cli.py",
+        "purpose": "add login と list の引数仕様テスト"
+      },
+      {
+        "path": "tests/test_config.py",
+        "purpose": "環境変数によるパス上書きテスト"
+      },
+      {
+        "path": "tests/test_models.py",
+        "purpose": "複数アカウント前提の識別ルールテスト"
+      },
+      {
+        "path": "tests/test_identifiers.py",
+        "purpose": "record_id 採番テスト"
+      },
+      {
+        "path": "tests/test_vault_store.py",
+        "purpose": "alias 解決と revoke のドキュメント操作テスト"
+      },
+      {
+        "path": "tests/test_crypto.py",
+        "purpose": "暗号化 round-trip テスト"
+      },
+      {
+        "path": "tests/test_cli_flow.py",
+        "purpose": "init/set/get と add login/revoke の CLI フローテスト"
+      },
+      {
+        "path": "tests/test_template_render.py",
+        "purpose": "テンプレート展開と record field 解決のテスト"
+      },
+      {
+        "path": "handoff/handoff_2026-04-02_v1.json",
+        "purpose": "今回の設計着手内容を次回へ引き継ぐ"
+      }
+    ],
+    "references": [
+      "../no-tion-plan/TASKS.md",
+      "handoff/handoff_2026-03-26_v1.json"
+    ],
+    "commands_executed": [
+      "Get-ChildItem -Force",
+      "Get-Content -Raw handoff/handoff_2026-03-26_v1.json",
+      "Get-Content -Raw ../no-tion-plan/TASKS.md",
+      "Get-Content -Raw CLAUDE.md",
+      "Get-Content -Raw .gitignore",
+      "git status --short",
+      "Get-Content -Raw ../business-master-sync/CLAUDE.md",
+      "Get-Content -Raw ../business-master-sync/gas/setup_spreadsheet.gs",
+      "Get-Content -Raw ../business-master-sync/gas/sync_to_yaml.gs",
+      "python -m pytest"
+    ]
+  },
+  "decisions": [
+    {
+      "topic": "実装言語",
+      "decision": "Python 3.10+ を前提にする",
+      "reason": "NH1 環境との相性がよく、CLI と暗号処理を単純に保守できるため"
+    },
+    {
+      "topic": "暗号化方式",
+      "decision": "AES-256-GCM + scrypt を採用候補とする",
+      "reason": "追加サービスなしで機密性と完全性を両立しやすいため"
+    },
+    {
+      "topic": "unlock 戦略",
+      "decision": "目標形はセッションエージェント方式、ただし Phase 1 は対話アンロック暫定運用でも開始可能とした",
+      "reason": "利便性と実装複雑度のバランスを取りながら前進できるため"
+    },
+    {
+      "topic": "人間向けインターフェイス",
+      "decision": "本命は NH1 ローカル Web アプリ、Chatwork は通知専用に留める",
+      "reason": "一覧性と安全性の両立には Web UI が向いており、チャットを秘密値の表示面にするとリスクが高いため"
+    },
+    {
+      "topic": "AI 間・NH1 間の秘密情報受け渡し",
+      "decision": "原則は record_id などの参照名のみ共有し、実際の秘密値取得は NH1 上の CLI/broker に限定する",
+      "reason": "会話ログや共有チャネルへ秘密値が露出する面積を最小化するため"
+    },
+    {
+      "topic": "business-master-sync との役割分担",
+      "decision": "スプレッドシートはサービス・アカウントの非秘密メタデータを持ち、パスワード/API キー本文は credential-vault のみで保持する",
+      "reason": "同一サービスの複数アカウントを人間が俯瞰しやすくしつつ、秘密値をスプシに載せないため"
+    },
+    {
+      "topic": "CLI の識別単位",
+      "decision": "service 名だけでなく record_id を主識別子にし、entity_id と account_label を人間向け表示の中核にする",
+      "reason": "同一サービス配下の複数アカウントを安全に区別するため"
+    },
+    {
+      "topic": "平文ドキュメント構造",
+      "decision": "vault 本体の暗号化前データは records と aliases を持つ辞書構造で扱う",
+      "reason": "record_id を主としつつ、NOTION_TOKEN のような互換 alias も解決できるようにするため"
+    },
+    {
+      "topic": "Phase 1 の実装方式",
+      "decision": "まずは direct-password モードで init/get/set/add/list/view/delete/revoke を動かし、unlock/lock は後続に回す",
+      "reason": "安全に実データ保存を先に成立させ、セッション機構の複雑さを後段へ分離するため"
+    },
+    {
+      "topic": "mail-invoice-processor との早期連携方式",
+      "decision": "コード直結より先に render/exec を入れ、runtime YAML を vault 参照テンプレートから一時生成する",
+      "reason": "別リポジトリ側をすぐ大きく変更せずに、平文パスワード設定を減らせるため"
+    }
+  ],
+  "notes_for_next_ai": {
+    "uncommitted_thoughts": [
+      "最初の実装では pyproject.toml と src レイアウトを作ると流れが良い",
+      "CLI パーサは argparse でも十分だが、使い勝手優先なら Typer も候補",
+      "get の非対話要件が強い場合は unlock を Phase 1.5 に繰り上げてもよい",
+      "レコード型は api_secret と web_login を最初から分けた方が後の Web UI が作りやすい",
+      "business-master-sync に利用サービス/サービスアカウントのシートを追加すると、人間の管理台帳として使いやすい",
+      "get は interactive ならプロンプト、非対話なら env または即失敗にしている",
+      "mail-invoice-processor には secret://rec_xxx#field 形式のテンプレートを置くのが最短",
+      "docs/examples/mail_invoice_processor.local.runtime.template.yaml を叩き台にできる"
+    ],
+    "known_risks": [
+      "NH1 再起動後に unlock が必要になる",
+      "単一ファイル更新なので排他制御が必要",
+      "マスターパスワード紛失時の復旧方針が未定",
+      "Chatwork を主インターフェイスにすると秘密値露出や誤送信リスクが高い",
+      "この Windows 開発環境では python コマンドが見つからず、pytest 未実行",
+      "mail-invoice-processor の .venv も参照先 Python が壊れており流用できなかった"
+    ],
+    "next_actions": [
+      {
+        "priority": "high",
+        "action": "CLI と VaultDocument の接続をさらに進め、update 系挙動を磨く",
+        "done_condition": "set/add/view/list/get/revoke/delete/render/exec が想定どおりのフィールドを扱い、曖昧な alias 衝突が整理される"
+      },
+      {
+        "priority": "high",
+        "action": "mail-invoice-processor 側へテンプレート方式を具体適用する",
+        "done_condition": "local.runtime.yaml の平文パスワード項目が template 参照へ置き換わる方針またはパッチが入る"
+      },
+      {
+        "priority": "medium",
+        "action": "unlock/lock/status の次段設計を実装へ落とす",
+        "done_condition": "direct-password モードからセッション方式への移行計画または最小実装が入る"
+      },
+      {
+        "priority": "medium",
+        "action": "Python 実行環境を確認して pytest を流す",
+        "done_condition": "少なくとも parser/model/store/crypto/template のテスト結果が確認できる"
+      }
+    ]
+  },
+  "security": {
+    "data_classification": "P1a-P3",
+    "sensitive_data_handling": [
+      "vault.enc は GitHub 非管理のまま維持する",
+      "マスターパスワードや実際の秘密値はこのリポジトリに入れない",
+      "AI は設計と実装だけを担当する"
+    ],
+    "secrets_touched": false
+  }
+}

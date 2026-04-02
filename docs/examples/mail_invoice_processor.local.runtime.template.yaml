@@ -1,0 +1,40 @@
+mailbox:
+  host: "secret://MAILBOX_PRIMARY#host"
+  username: "secret://MAILBOX_PRIMARY#username"
+  password: "secret://MAILBOX_PRIMARY#password"
+  port: "secret://MAILBOX_PRIMARY#port"
+  use_ssl: "secret://MAILBOX_PRIMARY#use_ssl"
+  timeout_seconds: 30
+
+vendor_master:
+  source_type: "google_sheets_csv"
+  spreadsheet_url: "https://docs.google.com/spreadsheets/d/REPLACE_ME/edit#gid=0"
+  gid: "0"
+  destinations_gid: "123456789"
+
+smtp:
+  host: "secret://SMTP_PRIMARY#host"
+  username: "secret://SMTP_PRIMARY#username"
+  password: "secret://SMTP_PRIMARY#password"
+  from_address: "secret://SMTP_PRIMARY#from_address"
+  port: "secret://SMTP_PRIMARY#port"
+  use_ssl: "secret://SMTP_PRIMARY#use_ssl"
+  starttls: "secret://SMTP_PRIMARY#starttls"
+  timeout_seconds: 30
+
+portal_accounts:
+  FUJIFILM_BI_DIRECT:
+    username: "secret://FUJIFILM_BI_DIRECT#username"
+    password: "secret://FUJIFILM_BI_DIRECT#password"
+    browser: "edge"
+    headless: true
+    timeout_seconds: 60
+    download_timeout_seconds: 60
+
+  SAGAWA_SMART_CLUB:
+    username: "secret://SAGAWA_SMART_CLUB#username"
+    password: "secret://SAGAWA_SMART_CLUB#password"
+    browser: "edge"
+    headless: true
+    timeout_seconds: 60
+    download_timeout_seconds: 60

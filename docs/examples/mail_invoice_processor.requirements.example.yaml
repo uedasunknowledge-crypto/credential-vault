@@ -1,0 +1,94 @@
+version: 1
+records:
+  - record_ref: MAILBOX_PRIMARY
+    record_type: mailbox_account
+    aliases:
+      - mail-invoice:C02:請求書受信POP
+    required_fields:
+      - host
+      - port
+      - protocol
+      - username
+      - password
+      - use_ssl
+    rotation_days: 90
+    record:
+      service_name: mail-invoice
+      entity_id: C02
+      department_id: OPS
+      account_label: 請求書受信POP
+      usage_purpose: Bill One 請求書取込
+      context_refs:
+        - biz:C02
+        - project:mail-invoice
+        - tool:billone
+      classification: P2a
+      protocol: pop3
+      use_ssl: true
+
+  - record_ref: SMTP_PRIMARY
+    record_type: smtp_account
+    aliases:
+      - mail-invoice:C02:BillOne配送SMTP
+    required_fields:
+      - host
+      - port
+      - username
+      - password
+      - from_address
+      - use_ssl
+      - starttls
+    rotation_days: 90
+    record:
+      service_name: mail-invoice
+      entity_id: C02
+      department_id: OPS
+      account_label: Bill One 配送SMTP
+      usage_purpose: Bill One 配送
+      context_refs:
+        - biz:C02
+        - project:mail-invoice
+        - tool:billone
+      classification: P2a
+      use_ssl: false
+      starttls: true
+
+  - record_ref: FUJIFILM_BI_DIRECT
+    record_type: web_login
+    aliases:
+      - portal:FUJIFILM_BI_DIRECT
+    required_fields:
+      - login_url
+      - username
+      - password
+    rotation_days: 90
+    record:
+      service_name: fujifilm-bi-direct
+      entity_id: C02
+      account_label: 富士フイルムBIダイレクト
+      usage_purpose: 請求書取得
+      context_refs:
+        - biz:C02
+        - project:mail-invoice
+        - vendor:FUJIFILM_BI_DIRECT
+      classification: P2a
+
+  - record_ref: SAGAWA_SMART_CLUB
+    record_type: web_login
+    aliases:
+      - portal:SAGAWA_SMART_CLUB
+    required_fields:
+      - login_url
+      - username
+      - password
+    rotation_days: 90
+    record:
+      service_name: sagawa-smart-club
+      entity_id: C02
+      account_label: 佐川スマートクラブ
+      usage_purpose: 請求書取得
+      context_refs:
+        - biz:C02
+        - project:mail-invoice
+        - vendor:SAGAWA_SMART_CLUB
+      classification: P2a

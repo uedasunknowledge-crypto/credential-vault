@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "credential-vault"
+version = "0.1.0"
+description = "NH1 向けのクレデンシャル管理 CLI"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "cryptography>=42.0.0",
+    "PyYAML>=6.0.1",
+]
+
+[project.scripts]
+secrets = "credential_vault.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-p no:tmpdir -p no:cacheprovider"
+cache_dir = ".tmp/pytest-cache"

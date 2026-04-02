@@ -1,0 +1,125 @@
+{
+  "handoff_version": "3.0",
+  "handoff_date": "2026-04-02",
+  "from": "Codex",
+  "to": "次のAI/実装担当",
+  "project": {
+    "name": "クレデンシャル管理基盤",
+    "repo": "uedasunknowledge-crypto/credential-vault",
+    "branch": "main",
+    "related_issue_numbers": []
+  },
+  "objective": "mail-invoice-processor へサイトID/パスワードを安全に渡す最短経路を、別repoをまだ大きく書き換えずに使える形で用意する。",
+  "current_state": {
+    "summary": "credential-vault 側に mail-invoice-processor 用の PowerShell ラッパーを追加し、vault template を一時展開して `--runtime-config` へ差し込めるようにした。`mail-invoice-processor` 側の既存 module (`main`, `url_downloader`, `delivery_sender`, `replay_eml`) はそのまま使える。ダミー vault で wrapper 実行と render 生成を確認済みで、credential-vault の既存 pytest 14 件も通過している。",
+    "completed": [
+      "mail-invoice-processor の runtime 設定読み込みと CLI 起動経路を確認",
+      "`mail-invoice-processor` が既に `--runtime-config` を受けられる module を整理",
+      "credential-vault に `scripts/run_mail_invoice_processor_with_vault.ps1` を追加",
+      "credential-vault に `scripts/render_mail_invoice_processor_runtime.ps1` を追加",
+      "README と docs/mail_invoice_processor_integration.md を wrapper 前提へ更新",
+      "ダミー vault とダミー template で `run_mail_invoice_processor_with_vault.ps1 -Module main --help` の実行確認",
+      "ダミー vault とダミー template で render 補助スクリプトの生成確認",
+      "`.\.venv\\Scripts\\python.exe -m pytest` で 14 件通過"
+    ],
+    "in_progress": [
+      "mail-invoice-processor 側の Vpass 専用 script を `--runtime-config` 対応へ寄せる検討",
+      "実運用用 template を mail-invoice-processor repo 側に正式配置するかの判断"
+    ],
+    "blocked": []
+  },
+  "artifacts": {
+    "changed_files": [
+      {
+        "path": "README.md",
+        "purpose": "mail-invoice-processor 用 wrapper の使い方を追記"
+      },
+      {
+        "path": "docs/mail_invoice_processor_integration.md",
+        "purpose": "render / exec を wrapper ベースの手順へ更新"
+      },
+      {
+        "path": "scripts/run_mail_invoice_processor_with_vault.ps1",
+        "purpose": "vault template を一時展開して mail-invoice-processor module を直接実行するラッパー"
+      },
+      {
+        "path": "scripts/render_mail_invoice_processor_runtime.ps1",
+        "purpose": "mail-invoice-processor 向け runtime YAML を明示生成する補助スクリプト"
+      },
+      {
+        "path": "handoff/handoff_2026-04-02_v3.json",
+        "purpose": "今回の mail-invoice-processor 連携実装を次回へ引き継ぐ"
+      }
+    ],
+    "references": [
+      "docs/examples/mail_invoice_processor.local.runtime.template.yaml",
+      "handoff/handoff_2026-04-02_v2.json",
+      "../mail-invoice-processor/src/bill_one_mail_ingest/settings.py",
+      "../mail-invoice-processor/src/bill_one_mail_ingest/url_downloader.py"
+    ],
+    "commands_executed": [
+      "Get-ChildItem -Force C:\\Users\\kouhe\\mail-invoice-processor",
+      "Get-Content C:\\Users\\kouhe\\mail-invoice-processor\\AGENTS.md",
+      "rg --line-number ... C:\\Users\\kouhe\\mail-invoice-processor",
+      "& .\\.venv\\Scripts\\python.exe -c \"import bill_one_mail_ingest.main ...\"",
+      "& .\\scripts\\run_mail_invoice_processor_with_vault.ps1 -Module main -TemplatePath <temp> --help",
+      "& .\\scripts\\render_mail_invoice_processor_runtime.ps1 -TemplatePath <temp> -OutputPath <temp>",
+      "& .\\.venv\\Scripts\\python.exe -m pytest"
+    ]
+  },
+  "decisions": [
+    {
+      "topic": "mail-invoice-processor 連携方式",
+      "decision": "mail-invoice-processor repo をすぐ改造せず、credential-vault 側の wrapper で template render/exec を吸収する",
+      "reason": "最短でサイトID/パスワードを vault へ逃がし、既存 module をそのまま利用できるため"
+    },
+    {
+      "topic": "実行用 Python",
+      "decision": "wrapper の既定 Python は credential-vault の `.venv\\Scripts\\python.exe` を使う",
+      "reason": "mail-invoice-processor の `.venv` は壊れていたが、credential-vault 側の Python から mail-invoice-processor の module import と selenium import が通ったため"
+    },
+    {
+      "topic": "wrapper 対象範囲",
+      "decision": "現時点では `main`, `url_downloader`, `delivery_sender`, `replay_eml` を対象にする",
+      "reason": "これらは既に `--runtime-config` を受けられる一方、Vpass 専用 scripts は `config/local.runtime.yaml` を固定参照しているため"
+    }
+  ],
+  "notes_for_next_ai": {
+    "uncommitted_thoughts": [
+      "この wrapper でまず portal_accounts の ID/PW を vault 化して使い始められる",
+      "次の本命は mail-invoice-processor repo 側へ `config/local.runtime.template.yaml` を正式配置し、README もそちらへ寄せること",
+      "Vpass の script は小さく `--runtime-config` を受けるように直せば同じ wrapper に乗せられる"
+    ],
+    "known_risks": [
+      "mail-invoice-processor repo 自体はまだ未編集なので、そちらの README や scripts は旧手順のまま",
+      "wrapper は PowerShell 前提。NH1 Linux 側の直接運用は別途 shell script か Python wrapper が必要",
+      "実運用 template の record_ref はまだユーザー側で実 vault に合わせて調整が必要"
+    ],
+    "next_actions": [
+      {
+        "priority": "high",
+        "action": "mail-invoice-processor 側へ `config/local.runtime.template.yaml` と README 更新を入れる",
+        "done_condition": "別repo単体でも vault template 運用の説明が閉じる"
+      },
+      {
+        "priority": "high",
+        "action": "run_vpass_to_drive.py / run_vpass_schedule.py を `--runtime-config` 対応へする",
+        "done_condition": "Vpass 系も同じ wrapper で安全に起動できる"
+      },
+      {
+        "priority": "medium",
+        "action": "Linux NH1 向けの実行ラッパーを追加する",
+        "done_condition": "NH1 上でも PowerShell なしで同じ運用ができる"
+      }
+    ]
+  },
+  "security": {
+    "data_classification": "P1a-P3",
+    "sensitive_data_handling": [
+      "実データは使わず、ダミー vault とダミー template だけで確認した",
+      "mail-invoice-processor 側へ平文 credential を書き出す恒久ファイルは作っていない",
+      "一時展開は `secrets exec` 側の cleanup に依存する"
+    ],
+    "secrets_touched": false
+  }
+}

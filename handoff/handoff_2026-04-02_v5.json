@@ -1,0 +1,139 @@
+{
+  "handoff_version": "3.0",
+  "handoff_date": "2026-04-02",
+  "from": "Codex",
+  "to": "次のAI/実装担当",
+  "project": {
+    "name": "クレデンシャル管理基盤",
+    "repo": "uedasunknowledge-crypto/credential-vault",
+    "branch": "main",
+    "related_issue_numbers": []
+  },
+  "objective": "不足 credential を自動検知し、人間に localhost 入力フォームで補完してもらえる導線を作る。mail-invoice-processor wrapper からも自動利用できる形にする。",
+  "current_state": {
+    "summary": "`secrets ensure`、requirements spec、localhost 入力フォーム、mail-invoice-processor wrapper 連携まで実装した。requirements spec があれば wrapper 実行前に不足を確認し、不足時は localhost フォームを起動できる。既存 alias で見つかったレコードには新 alias を自動付与するため、移行途中のレコードも流用しやすい。pytest は 23 件通過、wrapper の実地確認でも `ensure -> alias sync -> template render -> mail-invoice module 起動` の流れを確認済み。",
+    "completed": [
+      "requirements spec を読み込む `requirements.py` を追加",
+      "不足判定、record build、alias sync を実装",
+      "localhost 入力フォームサーバー `input_form.py` を追加",
+      "CLI に `ensure --spec ... --launch-form` を追加",
+      "wrapper `run_mail_invoice_processor_with_vault.ps1` が requirements spec を先に確認するよう更新",
+      "example files と docs を requirements spec 前提へ更新",
+      "mail-invoice wrapper の実地確認で missing -> exit 22 と satisfied -> module help 起動の両方を確認",
+      "pytest 23 件通過"
+    ],
+    "in_progress": [
+      "mail-invoice-processor repo 側へ requirements/template を正式配置すること",
+      "フォーム完了後に実行を継続する UX の磨き込み"
+    ],
+    "blocked": []
+  },
+  "artifacts": {
+    "changed_files": [
+      {
+        "path": "src/credential_vault/requirements.py",
+        "purpose": "requirements spec、missing 判定、alias sync、record build"
+      },
+      {
+        "path": "src/credential_vault/input_form.py",
+        "purpose": "localhost 入力フォームサーバー"
+      },
+      {
+        "path": "src/credential_vault/cli.py",
+        "purpose": "`ensure` コマンド追加と requirements 連携"
+      },
+      {
+        "path": "scripts/run_mail_invoice_processor_with_vault.ps1",
+        "purpose": "requirements spec を先に確認し、不足時フォーム起動までつなぐ"
+      },
+      {
+        "path": "docs/examples/mail_invoice_processor.requirements.example.yaml",
+        "purpose": "mail-invoice-processor 用 requirements spec 叩き台"
+      },
+      {
+        "path": "docs/examples/mail_invoice_processor.local.runtime.template.yaml",
+        "purpose": "alias ref ベースの template 例"
+      },
+      {
+        "path": "docs/mail_invoice_processor_integration.md",
+        "purpose": "requirements spec と alias sync を含む運用手順"
+      },
+      {
+        "path": "tests/test_requirements.py",
+        "purpose": "requirements spec と record build のテスト"
+      },
+      {
+        "path": "tests/test_cli_ensure.py",
+        "purpose": "CLI ensure の missing / satisfied テスト"
+      },
+      {
+        "path": "handoff/handoff_2026-04-02_v5.json",
+        "purpose": "今回の ensure / form / wrapper 実装を次回へ引き継ぐ"
+      }
+    ],
+    "references": [
+      "handoff/handoff_2026-04-02_v4.json",
+      "docs/examples/mail_invoice_processor.requirements.example.yaml",
+      "docs/mail_invoice_processor_integration.md"
+    ],
+    "commands_executed": [
+      "& .\\.venv\\Scripts\\python.exe -m pytest",
+      "& .\\scripts\\run_mail_invoice_processor_with_vault.ps1 ... -LaunchFormIfMissing:$false --help"
+    ]
+  },
+  "decisions": [
+    {
+      "topic": "不足 credential の宣言方法",
+      "decision": "template とは別に requirements spec YAML を持つ",
+      "reason": "不足項目、人間入力項目、record metadata を明示しないとフォーム化しづらいため"
+    },
+    {
+      "topic": "人間入力導線",
+      "decision": "localhost 限定のワンタイム URL フォームを採る",
+      "reason": "Chatwork より安全で、NH1 運用にも合わせやすいため"
+    },
+    {
+      "topic": "移行途中の既存レコード活用",
+      "decision": "requirements spec の aliases で既存レコードを見つけ、新 alias を自動付与する",
+      "reason": "既存登録を壊さずに `MAILBOX_PRIMARY` のような新参照名へ寄せられるため"
+    }
+  ],
+  "notes_for_next_ai": {
+    "uncommitted_thoughts": [
+      "次の本命は mail-invoice-processor repo に `config/local.runtime.template.yaml` と `config/local.runtime.requirements.yaml` を正式追加すること",
+      "フォーム HTML は最小構成なので、あとで見やすさは伸ばせる",
+      "将来的に `ensure` は spec 不足時の JSON 出力を別プロセス連携にも使える"
+    ],
+    "known_risks": [
+      "localhost フォームは現在テスト未追加で、手動前提の確認のみ",
+      "API secret の requirements form は canonical field 名 (`secret_value`) 前提",
+      "Vpass 用 scripts はまだ runtime-config / requirements 流儀に乗っていない"
+    ],
+    "next_actions": [
+      {
+        "priority": "high",
+        "action": "mail-invoice-processor repo 側へ template / requirements / README 更新を入れる",
+        "done_condition": "別repo単体でも vault + ensure の手順が閉じる"
+      },
+      {
+        "priority": "high",
+        "action": "localhost フォームの手動動作確認と必要なら簡易テスト追加",
+        "done_condition": "missing から保存完了までの 1 回の入力導線が確認できる"
+      },
+      {
+        "priority": "medium",
+        "action": "Vpass scripts を runtime-config + requirements 流儀へ寄せる",
+        "done_condition": "Vpass 系も wrapper 1 本で起動できる"
+      }
+    ]
+  },
+  "security": {
+    "data_classification": "P1a-P3",
+    "sensitive_data_handling": [
+      "実 credential は使わず、ダミー vault とダミー spec で確認した",
+      "フォームは localhost バインドのみ",
+      "不足時は URL を表示するだけで、値はチャットへ出さない"
+    ],
+    "secrets_touched": false
+  }
+}

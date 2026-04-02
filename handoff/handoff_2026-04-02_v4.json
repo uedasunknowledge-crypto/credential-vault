@@ -1,0 +1,166 @@
+{
+  "handoff_version": "3.0",
+  "handoff_date": "2026-04-02",
+  "from": "Codex",
+  "to": "次のAI/実装担当",
+  "project": {
+    "name": "クレデンシャル管理基盤",
+    "repo": "uedasunknowledge-crypto/credential-vault",
+    "branch": "main",
+    "related_issue_numbers": []
+  },
+  "objective": "現状のスプシ/Chatwork 正本から段階移行できるようにしつつ、人間が 1 セットで扱うメール系資格情報と business 系共通語による特定軸を実装へ反映する。",
+  "current_state": {
+    "summary": "段階移行方針の文書化に加え、`mailbox_account` と `smtp_account` を実装した。server, account, password を 1 レコードで持てるようになり、`context_refs` で事業・プロジェクト・業務文脈の共通語を保持できる。CLI では `add mailbox` / `add smtp` を追加し、template render でも host / port / use_ssl / username / password / from_address を型付きで取り出せる。既存テストに加えて新規レコードと template のテストも追加し、pytest 19 件が通過している。",
+    "completed": [
+      "段階移行とバックアップ方針を docs/migration_strategy.md に追加",
+      "RecordType に mailbox_account / smtp_account を追加",
+      "SecretRecord に context_refs を追加",
+      "MailboxAccountRecord / SmtpAccountRecord を追加",
+      "record_from_dict が新レコード型を復元できるように更新",
+      "record_id prefix に rec_mbx / rec_smtp を追加",
+      "template_render が mailbox / smtp の各フィールドと bool/int 型を扱えるように更新",
+      "CLI に add mailbox / add smtp を追加",
+      "CLI の list へ context_ref filter と TYPE 列を追加",
+      "CLI の view/list JSON を既定マスク寄りに調整",
+      "mail-invoice-processor 連携ドキュメントを mailbox_account / smtp_account 前提へ更新",
+      "pytest 19 件通過"
+    ],
+    "in_progress": [
+      "不足 credential を検知して人間入力フォームへ誘導するフロー設計",
+      "mail-invoice-processor 側へ template と runtime-config の正式導線を移植すること"
+    ],
+    "blocked": []
+  },
+  "artifacts": {
+    "changed_files": [
+      {
+        "path": "src/credential_vault/models.py",
+        "purpose": "mailbox_account / smtp_account と context_refs の実装"
+      },
+      {
+        "path": "src/credential_vault/identifiers.py",
+        "purpose": "新 record_type の ID prefix 追加"
+      },
+      {
+        "path": "src/credential_vault/template_render.py",
+        "purpose": "mailbox / smtp field と型付き展開をサポート"
+      },
+      {
+        "path": "src/credential_vault/cli.py",
+        "purpose": "add mailbox / add smtp / context_ref filter / 表示マスク強化"
+      },
+      {
+        "path": "tests/test_models.py",
+        "purpose": "mailbox_account の識別単位テスト"
+      },
+      {
+        "path": "tests/test_template_render.py",
+        "purpose": "mailbox_account field と型保持レンダリングテスト"
+      },
+      {
+        "path": "tests/test_cli.py",
+        "purpose": "add mailbox parser テスト"
+      },
+      {
+        "path": "tests/test_cli_flow.py",
+        "purpose": "add mailbox / get password のフローテスト"
+      },
+      {
+        "path": "docs/migration_strategy.md",
+        "purpose": "現行正本から段階移行する運用方針"
+      },
+      {
+        "path": "docs/expanded_requirements.md",
+        "purpose": "mailbox_account / smtp_account / context_refs の設計追記"
+      },
+      {
+        "path": "docs/mail_invoice_processor_integration.md",
+        "purpose": "mailbox_account / smtp_account を使った template 例へ更新"
+      },
+      {
+        "path": "docs/examples/mail_invoice_processor.local.runtime.template.yaml",
+        "purpose": "mailbox/smtp を 1 レコード参照で扱う template 例"
+      },
+      {
+        "path": "README.md",
+        "purpose": "段階移行文書へのリンクを追加"
+      },
+      {
+        "path": "handoff/handoff_2026-04-02_v4.json",
+        "purpose": "今回の段階移行・複合資格情報の実装内容を引き継ぐ"
+      }
+    ],
+    "references": [
+      "handoff/handoff_2026-04-02_v3.json",
+      "docs/migration_strategy.md",
+      "docs/mail_invoice_processor_integration.md"
+    ],
+    "commands_executed": [
+      "Get-Content src/credential_vault/models.py",
+      "Get-Content src/credential_vault/template_render.py",
+      "Get-Content src/credential_vault/cli.py",
+      "& .\\.venv\\Scripts\\python.exe -m pytest"
+    ]
+  },
+  "decisions": [
+    {
+      "topic": "人間向けのメール資格情報の単位",
+      "decision": "POP/IMAP は mailbox_account、SMTP は smtp_account として 1 レコードで持つ",
+      "reason": "人間の入力・参照単位は server, account, password が一体であり、field 単位に分けると運用しづらいため"
+    },
+    {
+      "topic": "複数 credential の特定軸",
+      "decision": "entity_id / department_id / account_label / usage_purpose に加えて context_refs を持つ",
+      "reason": "business 系の共通語や project 単位の参照キーで横断特定できるようにするため"
+    },
+    {
+      "topic": "段階移行の正本方針",
+      "decision": "バックアップと運用実績が整うまでは、旧スプシ/Chatwork 正本をすぐ破棄せず vault を併設する",
+      "reason": "NH1 の障害リスクが高く、唯一の正本へ一気に切り替えるのは危険なため"
+    },
+    {
+      "topic": "template render の型",
+      "decision": "port や use_ssl などは文字列化せず、型付きのまま YAML/JSON に流す",
+      "reason": "後段アプリが bool/int を前提に読むため"
+    }
+  ],
+  "notes_for_next_ai": {
+    "uncommitted_thoughts": [
+      "次は `secrets ensure` のような不足確認コマンドを足すと、フォーム誘導へつなげやすい",
+      "context_refs の命名規約は business 系リポジトリと合わせて早めに決めたい",
+      "mail-invoice-processor 側へ local.runtime.template.yaml を正式配置すると、運用がさらに分かりやすくなる"
+    ],
+    "known_risks": [
+      "list --json は password をマスクしたが、用途によっては別の explicit reveal option が必要になるかもしれない",
+      "mailbox_account / smtp_account の alias 規則はまだ最小限で、曖昧解決は未実装",
+      "不足 credential 入力フォームはまだ未実装"
+    ],
+    "next_actions": [
+      {
+        "priority": "high",
+        "action": "不足 credential 検知と人間入力フォーム誘導の仕組みを設計・実装する",
+        "done_condition": "必要 record がないときに不足一覧と入力導線を返せる"
+      },
+      {
+        "priority": "high",
+        "action": "mail-invoice-processor 側へ template 運用を正式導入する",
+        "done_condition": "local.runtime.yaml の平文依存が template ベースへ置き換わる"
+      },
+      {
+        "priority": "medium",
+        "action": "context_refs の共通語ルールを business 系と整合させる",
+        "done_condition": "biz / project / tool などの接頭辞ルールが文書化される"
+      }
+    ]
+  },
+  "security": {
+    "data_classification": "P1a-P3",
+    "sensitive_data_handling": [
+      "実 credential は一切投入していない",
+      "段階移行中は旧正本を残しつつ、新規平文保存先を増やさない方針",
+      "template render は必要最小限の一時ファイルだけを使う"
+    ],
+    "secrets_touched": false
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "handoff_version": "3.0",
+  "handoff_date": "2026-04-02",
+  "from": "Codex",
+  "to": "次のAI/実装担当",
+  "project": {
+    "name": "クレデンシャル管理基盤",
+    "repo": "uedasunknowledge-crypto/credential-vault",
+    "branch": "main",
+    "related_issue_numbers": []
+  },
+  "objective": "Windows 開発環境を実際に動かせる状態へ整え、mail-invoice-processor 連携の実装を継続しやすくする。",
+  "current_state": {
+    "summary": "この端末で使える Python 3.12 を流用して `.venv` を復旧し、pytest 実行可能な開発環境を整備した。Windows サンドボックス由来の temp 制約に合わせて pytest 設定と test fixture を補正し、scrypt の既定メモリ制限で落ちる問題も修正した。`secrets.ps1` と `secrets.cmd` で、pip install なしでも CLI を直接起動できる。",
+    "completed": [
+      "使える Python 候補を調査し、`C:\\Users\\kouhe\\pos-sales-report\\.python312\\python.exe` が動作することを確認",
+      "credential-vault 直下の `.venv` を復旧",
+      "`.venv\\pyvenv.cfg` を調整し、既存の system site-packages を参照できるように変更",
+      "別リポジトリの site-packages から pytest 一式をローカル `.venv` へ複製し、ネットワークなしで pytest を起動可能にした",
+      "pyproject.toml の pytest 設定をサンドボックス向けに調整",
+      "tests/conftest.py を追加し、tmp_path をワークスペース内の自前 fixture に置き換えた",
+      "crypto.py で scrypt の maxmem を明示し、Windows/OpenSSL 既定値での `memory limit exceeded` を解消",
+      "README.md にローカル開発手順を追記",
+      "secrets.ps1 / secrets.cmd を追加し、`.venv` から CLI を直接起動できるようにした",
+      "`.gitignore` に `.tmp/` を追加",
+      "`.\.venv\\Scripts\\python.exe -m pytest` で 14 件のテスト通過を確認",
+      "`.\secrets.ps1 status` と `cmd /c secrets.cmd status` の起動確認"
+    ],
+    "in_progress": [
+      "mail-invoice-processor 側へ template render/exec 方式を具体適用する",
+      "unlock/lock セッション方式の実装"
+    ],
+    "blocked": [
+      "repo 直下に残った `pytest-cache-files-*` ディレクトリは権限拒否で削除できなかった"
+    ]
+  },
+  "artifacts": {
+    "changed_files": [
+      {
+        "path": ".gitignore",
+        "purpose": "`.tmp/` を ignore 対象へ追加"
+      },
+      {
+        "path": "README.md",
+        "purpose": "Windows ローカル開発とテスト実行手順を追記"
+      },
+      {
+        "path": "pyproject.toml",
+        "purpose": "pytest 設定をサンドボックス互換に調整"
+      },
+      {
+        "path": "src/credential_vault/crypto.py",
+        "purpose": "scrypt の maxmem を明示して Windows/OpenSSL 互換性を向上"
+      },
+      {
+        "path": "tests/conftest.py",
+        "purpose": "tmp_path をワークスペース内の自前 fixture に置き換え"
+      },
+      {
+        "path": "secrets.ps1",
+        "purpose": "PowerShell から `.venv` 経由で CLI を起動するラッパー"
+      },
+      {
+        "path": "secrets.cmd",
+        "purpose": "cmd.exe から `.venv` 経由で CLI を起動するラッパー"
+      },
+      {
+        "path": "handoff/handoff_2026-04-02_v2.json",
+        "purpose": "今回の環境整備内容を次回へ引き継ぐ"
+      }
+    ],
+    "references": [
+      "handoff/handoff_2026-04-02_v1.json",
+      "../no-tion-plan/TASKS.md"
+    ],
+    "commands_executed": [
+      "Get-ChildItem -Force",
+      "git status --short",
+      "Get-Content pyproject.toml",
+      "Get-Content AGENTS.md",
+      "& 'C:\\Users\\kouhe\\pos-sales-report\\.python312\\python.exe' --version",
+      "& 'C:\\Users\\kouhe\\pos-sales-report\\.venv\\Scripts\\python.exe' --version",
+      "& 'C:\\Users\\kouhe\\pos-sales-report\\.python312\\python.exe' -m venv .venv",
+      "& .\\.venv\\Scripts\\python.exe -m ensurepip --default-pip --upgrade",
+      "Copy-Item from other repos' site-packages into .venv\\Lib\\site-packages",
+      "& .\\.venv\\Scripts\\python.exe -m pytest",
+      "& .\\secrets.ps1 status",
+      "cmd /c secrets.cmd status"
+    ]
+  },
+  "decisions": [
+    {
+      "topic": "Windows 開発用 Python",
+      "decision": "`C:\\Users\\kouhe\\pos-sales-report\\.python312\\python.exe` を流用して `.venv` を作る",
+      "reason": "この端末では `python` / `py` が見つからず、mail-invoice-processor や no-tion-plan の venv は参照先 Python が壊れていたため"
+    },
+    {
+      "topic": "pytest 導入方法",
+      "decision": "ネットワーク取得ではなく既存リポジトリの site-packages を複製して使う",
+      "reason": "sandbox 下では pip のネットワークアクセスが拒否され、最短で開発再開するにはローカル流用が現実的だったため"
+    },
+    {
+      "topic": "tmp_path 戦略",
+      "decision": "pytest の標準 tmpdir plugin は無効化し、tests/conftest.py の自前 fixture を使う",
+      "reason": "Windows サンドボックスでは AppData Local Temp と tempfile ベースの挙動で PermissionError が出たため"
+    },
+    {
+      "topic": "CLI 起動導線",
+      "decision": "開発環境では pip install 済みの console script ではなく `secrets.ps1` / `secrets.cmd` を置く",
+      "reason": "この時点では `.venv` 内の pip が未整備でも、すぐ CLI を使えるようにするため"
+    },
+    {
+      "topic": "scrypt 実装",
+      "decision": "`hashlib.scrypt` に maxmem を明示する",
+      "reason": "既定の OpenSSL メモリ制限で `n=32768, r=8, p=1` が Windows 上で失敗したため"
+    }
+  ],
+  "notes_for_next_ai": {
+    "uncommitted_thoughts": [
+      "`secrets.ps1` が最短の開発導線。PowerShell からはこれを使えばよい",
+      "mail-invoice-processor 側へ進むなら、まず runtime template をこの repo の example に寄せて render/exec をつなぐ",
+      "unlock/lock 実装前でも direct-password モードで template render/exec は使える"
+    ],
+    "known_risks": [
+      "`.venv` は他 repo の Python と site-packages 流用で成立しており、再現性はまだ弱い",
+      "pip install ベースの正式な bootstrap は未整備",
+      "repo 直下の `pytest-cache-files-*` 残骸は削除できず、git status 時に warning が出る可能性がある",
+      "unlock/lock セッションは未実装のまま"
+    ],
+    "next_actions": [
+      {
+        "priority": "high",
+        "action": "mail-invoice-processor 側の runtime 設定を template render/exec へ切り替える",
+        "done_condition": "平文 ID/PW を local.runtime.yaml に直接置かずに起動できる"
+      },
+      {
+        "priority": "medium",
+        "action": "Windows / NH1 の両方で再現できる bootstrap 手順を整える",
+        "done_condition": "新しい環境でも同じ手順で `.venv` とテスト実行まで到達できる"
+      },
+      {
+        "priority": "medium",
+        "action": "unlock/lock/status のセッション実装を進める",
+        "done_condition": "`get` を env なしの非対話呼び出しでも安全に使える形が見える"
+      }
+    ]
+  },
+  "security": {
+    "data_classification": "P1a-P3",
+    "sensitive_data_handling": [
+      "vault.enc は GitHub 非管理のまま維持する",
+      "実際のマスターパスワードや秘密値は投入していない",
+      "AI は実装と環境整備のみを担当した"
+    ],
+    "secrets_touched": false
+  }
+}

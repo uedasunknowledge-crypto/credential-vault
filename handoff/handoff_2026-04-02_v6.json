@@ -1,0 +1,131 @@
+{
+  "handoff_version": "3.0",
+  "handoff_date": "2026-04-02",
+  "from": "Codex",
+  "to": "次のAI/実装担当",
+  "project": {
+    "name": "クレデンシャル管理基盤",
+    "repo": "uedasunknowledge-crypto/credential-vault",
+    "branch": "main",
+    "related_issue_numbers": []
+  },
+  "objective": "mail-invoice-processor 側へ vault 運用を正式導入し、template / requirements / 実行ラッパーを repo 内に揃える。あわせて localhost 入力フォームと cross-repo wrapper の end-to-end 信頼性を上げる。",
+  "current_state": {
+    "summary": "mail-invoice-processor に `config/local.runtime.template.yaml` と `config/local.runtime.requirements.yaml` を正式追加し、`scripts/run_with_vault.ps1` から credential-vault を自動参照して `main` / `url_downloader` / `delivery_sender` / `replay_eml` / `vpass_to_drive` / `vpass_schedule` を起動できる形にした。さらに `credential-vault` 側で localhost 入力フォームの自動テストを追加し、mail repo wrapper では `VaultDataRoot` 指定・bool 引数転送・inner wrapper への余計な `--` 送出を修正した。dummy vault を使った wrapper 実地確認では missing で exit 22、充足後は `main --help` / `vpass_to_drive --help` が 0 で通った。",
+    "completed": [
+      "mail-invoice-processor に `config/local.runtime.template.yaml` を追加",
+      "mail-invoice-processor に `config/local.runtime.requirements.yaml` を追加",
+      "mail-invoice-processor に `scripts/run_with_vault.ps1` を追加",
+      "mail-invoice-processor の Vpass scripts を `--runtime-config` 対応へ更新",
+      "mail-invoice-processor README を vault 優先運用へ更新",
+      "mail repo の `test_run_vpass_to_drive_script.py` / `test_run_vpass_schedule_script.py` を更新して 3件通過",
+      "credential-vault に `tests/test_input_form.py` を追加し localhost 入力フォーム保存を自動テスト化",
+      "credential-vault に `FileVaultStore.for_root()` を追加して temp vault 検証を簡単にした",
+      "mail repo wrapper に `VaultDataRoot` を通し、dummy vault を指定した end-to-end 検証を通した"
+    ],
+    "in_progress": [
+      "localhost フォームを含む end-to-end の実運用確認",
+      "必要なら credential-vault 側 wrapper に Vpass 直通モードを統合すること"
+    ],
+    "blocked": []
+  },
+  "artifacts": {
+    "changed_files": [
+      {
+        "path": "../mail-invoice-processor/config/local.runtime.template.yaml",
+        "purpose": "mail-invoice-processor 用の secret:// 参照 template"
+      },
+      {
+        "path": "../mail-invoice-processor/config/local.runtime.requirements.yaml",
+        "purpose": "不足 credential の定義と入力フォーム項目"
+      },
+      {
+        "path": "../mail-invoice-processor/scripts/run_with_vault.ps1",
+        "purpose": "mail repo から credential-vault を呼ぶ実行ラッパー。VaultDataRoot 指定と inner wrapper 引数修正を含む"
+      },
+      {
+        "path": "scripts/run_mail_invoice_processor_with_vault.ps1",
+        "purpose": "VaultDataRoot 指定に対応し、dummy vault / 別保存先でも wrapper を使えるようにした"
+      },
+      {
+        "path": "src/credential_vault/vault_store.py",
+        "purpose": "temp root 用 `FileVaultStore.for_root()` を追加"
+      },
+      {
+        "path": "tests/test_input_form.py",
+        "purpose": "localhost 入力フォームの保存フローを HTTP POST で検証"
+      },
+      {
+        "path": "../mail-invoice-processor/scripts/run_vpass_to_drive.py",
+        "purpose": "`--runtime-config` 対応"
+      },
+      {
+        "path": "../mail-invoice-processor/scripts/run_vpass_schedule.py",
+        "purpose": "`--runtime-config` 対応"
+      },
+      {
+        "path": "../mail-invoice-processor/README.md",
+        "purpose": "vault 優先の実行手順に更新"
+      },
+      {
+        "path": "handoff/handoff_2026-04-02_v6.json",
+        "purpose": "今回の cross-repo 導入作業を次回へ引き継ぐ"
+      }
+    ],
+    "references": [
+      "docs/mail_invoice_processor_integration.md",
+      "scripts/run_mail_invoice_processor_with_vault.ps1",
+      "../mail-invoice-processor/config/local.runtime.template.yaml"
+    ],
+    "commands_executed": [
+      "C:\\Program Files\\PowerShell\\7\\pwsh.exe -Command \"$env:PYTHONDONTWRITEBYTECODE='1'; .\\.venv\\Scripts\\python.exe -m pytest -p no:cacheprovider tests\\test_run_vpass_to_drive_script.py tests\\test_run_vpass_schedule_script.py\"",
+      "$env:PYTHONDONTWRITEBYTECODE='1'; .\\.venv\\Scripts\\python.exe -m pytest -p no:cacheprovider",
+      "C:\\Program Files\\PowerShell\\7\\pwsh.exe -File C:\\Users\\kouhe\\mail-invoice-processor\\scripts\\run_with_vault.ps1 -CredentialVaultRoot C:\\Users\\kouhe\\credential-vault -VaultDataRoot <tempRoot> -Target main -LaunchFormIfMissing:$false -TargetArgs '--help'",
+      "C:\\Program Files\\PowerShell\\7\\pwsh.exe -File C:\\Users\\kouhe\\mail-invoice-processor\\scripts\\run_with_vault.ps1 -CredentialVaultRoot C:\\Users\\kouhe\\credential-vault -VaultDataRoot <tempRoot> -Target vpass_to_drive -LaunchFormIfMissing:$false -TargetArgs '--help'"
+    ]
+  },
+  "decisions": [
+    {
+      "topic": "mail-invoice-processor 側の導線",
+      "decision": "credential-vault repo だけでなく mail repo 自身にも wrapper と template / requirements を置く",
+      "reason": "利用者が mail repo からそのまま起動でき、運用切り替えが分かりやすくなるため"
+    },
+    {
+      "topic": "Vpass 運用",
+      "decision": "Vpass scripts は runtime file を直読みする構造を残しつつ `--runtime-config` で vault 展開ファイルを受ける",
+      "reason": "既存スクリプトを壊さずに安全側へ寄せやすいため"
+    }
+  ],
+  "notes_for_next_ai": {
+    "uncommitted_thoughts": [
+      "mail repo の wrapper は便利だがユニットテストは未追加",
+      "requirements spec は現状 C02 / OPS を前提にしているので、法人追加時は alias と context_refs を増やす",
+      "shell_command で PowerShell script を直 `& script.ps1` すると nested-script の `exit` と相性が悪かったため、実地確認は `pwsh -File` で行った"
+    ],
+    "known_risks": [
+      "mail repo には既存の未コミット変更と未追跡ファイルが多いので、次回も巻き戻さずに進めること",
+      "localhost フォームを含む end-to-end 動作はまだダミー以外で未確認"
+    ],
+    "next_actions": [
+      {
+        "priority": "high",
+        "action": "mail-invoice-processor の実 credential 未設定状態から `run_with_vault.ps1` を起動し、localhost フォーム補完まで手動確認する",
+        "done_condition": "不足検知 -> 入力 -> vault 保存 -> 実行継続が 1 回通る"
+      },
+      {
+        "priority": "medium",
+        "action": "Vpass 向け requirements spec の店舗メタデータや Drive 設定の持ち方を整理する",
+        "done_condition": "Vpass も mailbox と同じく移行手順が README だけで追える"
+      }
+    ]
+  },
+  "security": {
+    "data_classification": "P1a-P3",
+    "sensitive_data_handling": [
+      "実 credential には触れていない",
+      "mail repo の既存 `config/local.runtime.yaml` 内容は読まず、tracked template / requirements だけ追加した",
+      "README でも vault を正本にする前提へ寄せた"
+    ],
+    "secrets_touched": false
+  }
+}
