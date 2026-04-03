@@ -47,6 +47,13 @@ class RotationMode(str, Enum):
     AUTOMATIC = "automatic"
 
 
+class CheckStatus(str, Enum):
+    UNKNOWN = "unknown"
+    OK = "ok"
+    ATTENTION = "attention"
+    FAILED = "failed"
+
+
 @dataclass(slots=True)
 class RotationPolicy:
     """更新周期に関する最低限の情報。"""
@@ -83,6 +90,10 @@ class SecretRecord:
     created_at: datetime = field(default_factory=utc_now)
     updated_at: datetime = field(default_factory=utc_now)
     last_verified_at: datetime | None = None
+    last_tested_at: datetime | None = None
+    last_tested_by: str | None = None
+    last_test_status: CheckStatus = CheckStatus.UNKNOWN
+    last_test_note: str = ""
     rotation_policy: RotationPolicy = field(default_factory=RotationPolicy)
     expires_at: datetime | None = None
     revoked_at: datetime | None = None
@@ -117,10 +128,11 @@ class SecretRecord:
                 "record_type": self.record_type.value,
                 "classification": self.classification.value,
                 "status": self.status.value,
+                "last_test_status": self.last_test_status.value,
                 "rotation_policy": self.rotation_policy.to_dict(),
             }
         )
-        for key in ("created_at", "updated_at", "last_verified_at", "expires_at", "revoked_at"):
+        for key in ("created_at", "updated_at", "last_verified_at", "last_tested_at", "expires_at", "revoked_at"):
             value = getattr(self, key)
             data[key] = value.isoformat() if value else None
         return data
@@ -159,6 +171,11 @@ class WebLoginRecord(SecretRecord):
     user_code: str | None = None
     username: str | None = None
     password: str = ""
+    auth_flow: str | None = None
+    otp_contact: str | None = None
+    otp_owner: str | None = None
+    recovery_url: str | None = None
+    recovery_note: str | None = None
     mfa_note: str | None = None
     login_note: str | None = None
 
@@ -281,6 +298,10 @@ def record_from_dict(data: dict[str, Any]) -> SecretRecord:
         "created_at": parse_datetime(data.get("created_at")) or utc_now(),
         "updated_at": parse_datetime(data.get("updated_at")) or utc_now(),
         "last_verified_at": parse_datetime(data.get("last_verified_at")),
+        "last_tested_at": parse_datetime(data.get("last_tested_at")),
+        "last_tested_by": data.get("last_tested_by"),
+        "last_test_status": CheckStatus(data.get("last_test_status", CheckStatus.UNKNOWN.value)),
+        "last_test_note": data.get("last_test_note", ""),
         "rotation_policy": RotationPolicy(
             mode=RotationMode(data.get("rotation_policy", {}).get("mode", RotationMode.MANUAL.value)),
             interval_days=data.get("rotation_policy", {}).get("interval_days"),
@@ -312,6 +333,11 @@ def record_from_dict(data: dict[str, Any]) -> SecretRecord:
             user_code=data.get("user_code"),
             username=data.get("username"),
             password=data.get("password", ""),
+            auth_flow=data.get("auth_flow"),
+            otp_contact=data.get("otp_contact"),
+            otp_owner=data.get("otp_owner"),
+            recovery_url=data.get("recovery_url"),
+            recovery_note=data.get("recovery_note"),
             mfa_note=data.get("mfa_note"),
             login_note=data.get("login_note"),
         )

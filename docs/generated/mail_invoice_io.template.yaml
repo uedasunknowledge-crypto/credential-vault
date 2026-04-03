@@ -1,0 +1,44 @@
+records:
+  MAILBOX_PRIMARY:
+    record_type: mailbox_account
+    service_name: secret://MAILBOX_PRIMARY#service_name
+    account_label: secret://MAILBOX_PRIMARY#account_label
+    classification: secret://MAILBOX_PRIMARY#classification
+    status: secret://MAILBOX_PRIMARY#status
+    context_refs: secret://MAILBOX_PRIMARY#context_refs
+    host: secret://MAILBOX_PRIMARY#host
+    port: secret://MAILBOX_PRIMARY#port
+    protocol: secret://MAILBOX_PRIMARY#protocol
+    username: secret://MAILBOX_PRIMARY#username
+    use_ssl: secret://MAILBOX_PRIMARY#use_ssl
+    password: secret://MAILBOX_PRIMARY#password
+  SMTP_PRIMARY:
+    record_type: smtp_account
+    service_name: secret://SMTP_PRIMARY#service_name
+    account_label: secret://SMTP_PRIMARY#account_label
+    classification: secret://SMTP_PRIMARY#classification
+    status: secret://SMTP_PRIMARY#status
+    context_refs: secret://SMTP_PRIMARY#context_refs
+    host: secret://SMTP_PRIMARY#host
+    port: secret://SMTP_PRIMARY#port
+    username: secret://SMTP_PRIMARY#username
+    from_address: secret://SMTP_PRIMARY#from_address
+    use_ssl: secret://SMTP_PRIMARY#use_ssl
+    starttls: secret://SMTP_PRIMARY#starttls
+    password: secret://SMTP_PRIMARY#password
+  VISA_VPASS:
+    record_type: web_login
+    service_name: secret://VISA_VPASS#service_name
+    account_label: secret://VISA_VPASS#account_label
+    classification: secret://VISA_VPASS#classification
+    status: secret://VISA_VPASS#status
+    context_refs: secret://VISA_VPASS#context_refs
+    login_url: secret://VISA_VPASS#login_url
+    username: secret://VISA_VPASS#username
+    password: secret://VISA_VPASS#password
+    auth_flow: secret://VISA_VPASS#auth_flow
+    otp_owner: secret://VISA_VPASS#otp_owner
+    recovery_url: secret://VISA_VPASS#recovery_url
+    recovery_note: secret://VISA_VPASS#recovery_note
+    mfa_note: secret://VISA_VPASS#mfa_note
+    login_note: secret://VISA_VPASS#login_note

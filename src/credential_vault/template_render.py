@@ -73,6 +73,11 @@ def record_field_value(record: SecretRecord, field_name: str) -> Any | None:
         "status": record.status.value,
         "description": record.description,
         "owner": record.owner,
+        "last_verified_at": record.last_verified_at.isoformat() if record.last_verified_at else None,
+        "last_tested_at": record.last_tested_at.isoformat() if record.last_tested_at else None,
+        "last_tested_by": record.last_tested_by,
+        "last_test_status": record.last_test_status.value,
+        "last_test_note": record.last_test_note,
     }
     if field_name in common_fields:
         return common_fields[field_name]
@@ -98,6 +103,11 @@ def record_field_value(record: SecretRecord, field_name: str) -> Any | None:
             "user_code": record.user_code,
             "username": record.username,
             "password": record.password,
+            "auth_flow": record.auth_flow,
+            "otp_contact": record.otp_contact,
+            "otp_owner": record.otp_owner,
+            "recovery_url": record.recovery_url,
+            "recovery_note": record.recovery_note,
             "mfa_note": record.mfa_note,
             "login_note": record.login_note,
         }

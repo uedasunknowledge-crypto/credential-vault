@@ -1,0 +1,9 @@
+record_refs:
+- MAILBOX_PRIMARY
+- SMTP_PRIMARY
+- VISA_VPASS
+priorities:
+- P1
+include_candidates: false
+credential_csv: C:/Users/kouhe/credential-vault/docs/working/mail_invoice_credential_inventory_working.csv
+auth_csv: C:/Users/kouhe/credential-vault/docs/working/mail_invoice_auth_step_inventory_working.csv

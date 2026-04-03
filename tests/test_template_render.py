@@ -10,10 +10,14 @@ def test_record_field_value_supports_web_login_password_and_username() -> None:
         username="admin@example.com",
         password="secret-password",
         login_url="https://accounts.secure.freee.co.jp/",
+        auth_flow="password_plus_totp",
+        otp_owner="経理責任者",
     )
 
     assert record_field_value(record, "username") == "admin@example.com"
     assert record_field_value(record, "password") == "secret-password"
+    assert record_field_value(record, "auth_flow") == "password_plus_totp"
+    assert record_field_value(record, "otp_owner") == "経理責任者"
 
 
 def test_render_template_file_resolves_secret_refs(tmp_path) -> None:

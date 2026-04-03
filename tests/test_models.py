@@ -1,4 +1,4 @@
-from credential_vault.models import ApiSecretRecord, MailboxAccountRecord, WebLoginRecord
+from credential_vault.models import ApiSecretRecord, CheckStatus, MailboxAccountRecord, WebLoginRecord, record_from_dict
 
 
 def test_web_login_dedup_identity_includes_account_context() -> None:
@@ -67,3 +67,31 @@ def test_mailbox_account_dedup_identity_keeps_server_and_account_together() -> N
         "billing@example.com",
         "INBOX",
     )
+
+
+def test_record_from_dict_preserves_web_login_auth_and_check_fields() -> None:
+    record = record_from_dict(
+        {
+            "record_id": "rec_web_001",
+            "record_type": "web_login",
+            "service_name": "freee-admin",
+            "account_label": "経理管理者",
+            "login_url": "https://accounts.secure.freee.co.jp/",
+            "username": "admin@example.com",
+            "password": "secret",
+            "auth_flow": "password_plus_totp",
+            "otp_contact": "Google Authenticator",
+            "otp_owner": "経理責任者",
+            "recovery_url": "https://accounts.secure.freee.co.jp/password_resets/new",
+            "recovery_note": "再設定は責任者確認後のみ実施",
+            "last_test_status": "attention",
+            "last_tested_by": "kouhe",
+            "last_test_note": "バックアップコード所在を再確認する",
+        }
+    )
+
+    assert isinstance(record, WebLoginRecord)
+    assert record.auth_flow == "password_plus_totp"
+    assert record.otp_owner == "経理責任者"
+    assert record.last_test_status is CheckStatus.ATTENTION
+    assert record.last_test_note == "バックアップコード所在を再確認する"

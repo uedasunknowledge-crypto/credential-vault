@@ -1,0 +1,3 @@
+vault_record_ref,checked_at,checked_by,target_kind,check_status,check_method,result_summary,next_action
+rec_web_001,2026-04-03T10:15:00+09:00,kouhe,web_login,ok,manual-browser,TOTP と会社コードでログイン成功,なし
+MAILBOX_PRIMARY,2026-04-03T10:40:00+09:00,kouhe,mailbox_account,attention,manual-pop3,受信成功だが運用メモ更新が必要,OTP 管理者の記載を追記

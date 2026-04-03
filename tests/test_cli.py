@@ -23,6 +23,10 @@ def test_add_login_accepts_multiple_account_identifiers() -> None:
             "C02",
             "--user-code",
             "admin@example.com",
+            "--auth-flow",
+            "password_plus_totp",
+            "--otp-owner",
+            "経理責任者",
         ]
     )
 
@@ -32,6 +36,8 @@ def test_add_login_accepts_multiple_account_identifiers() -> None:
     assert args.department_id == "D01"
     assert args.account_label == "経理管理者"
     assert args.company_code == "C02"
+    assert args.auth_flow == "password_plus_totp"
+    assert args.otp_owner == "経理責任者"
 
 
 def test_list_supports_service_and_entity_filters() -> None:
@@ -76,3 +82,14 @@ def test_add_mailbox_accepts_host_account_and_context_refs() -> None:
     assert args.host == "mail.example.com"
     assert args.username == "billing@example.com"
     assert args.context_ref == ["biz:C02", "project:mail-invoice"]
+
+
+def test_check_parser_accepts_status_and_operator() -> None:
+    parser = build_parser()
+
+    args = parser.parse_args(["check", "MAILBOX_PRIMARY", "--status", "ok", "--by", "kouhe", "--note", "POP 接続成功"])
+
+    assert args.command == "check"
+    assert args.record_ref == "MAILBOX_PRIMARY"
+    assert args.status == "ok"
+    assert args.by == "kouhe"

@@ -1,0 +1,7 @@
+﻿vault_record_ref,service_name,account_label,fill_priority,fill_hint,auth_flow,otp_contact,otp_owner,required_device,recovery_url,recovery_note,mfa_note,login_note
+VISA_VPASS,visa-vpass,VISA Vpass,P1,auth_flow、otp_owner、追加認証要否、復旧時の担当確認を先に埋める。,,,,,,,,
+candidate:FUJIFILM_BI_DIRECT,fujifilm-bi-direct,富士フイルムBIダイレクト,P2,auth_flow を先に埋め、MFA があるなら otp_contact/otp_owner を追加。,,,,,,,,
+candidate:SAGAWA_SMART_CLUB,sagawa-smart-club,佐川急便スマートクラブ,P2,auth_flow を先に埋め、MFA があるなら otp_contact/otp_owner を追加。,,,,,,,,
+candidate:SANICLEAN,saniclean,サニクリーン,P2,auth_flow を先に埋め、MFA があるなら otp_contact/otp_owner を追加。,,,,,,,,
+candidate:GMO,gmo,GMO,P2,OTP なし前提の候補。auth_flow を password_only などで確定。,,,,,,,,
+candidate:JCB,jcb,JCB,P2,OTP/MFA 対応候補なので auth_flow と otp_owner を確認。,,,,,,,,

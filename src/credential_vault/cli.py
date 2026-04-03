@@ -20,6 +20,7 @@ from credential_vault.identifiers import next_record_id
 from credential_vault.input_form import launch_input_form
 from credential_vault.models import (
     ApiSecretRecord,
+    CheckStatus,
     Classification,
     MailboxAccountRecord,
     MachineSecretRecord,
@@ -161,6 +162,11 @@ def build_parser() -> argparse.ArgumentParser:
     add_login_parser.add_argument("--tag", action="append", default=[], help="タグ")
     add_login_parser.add_argument("--owner", help="更新責任者")
     add_login_parser.add_argument("--context-ref", action="append", default=[], help="business 共通語などの参照キー")
+    add_login_parser.add_argument("--auth-flow", help="password_only / password_plus_totp など")
+    add_login_parser.add_argument("--otp-contact", help="OTP の配送先や認証アプリの識別")
+    add_login_parser.add_argument("--otp-owner", help="OTP を受け取る人や管理ロール")
+    add_login_parser.add_argument("--recovery-url", help="再設定や復旧の URL")
+    add_login_parser.add_argument("--recovery-note", help="MFA/復旧時の手順メモ")
     add_login_parser.add_argument("--mfa-note", help="MFA に関する補足")
     add_login_parser.add_argument("--login-note", help="ログイン手順の補足")
 
@@ -219,6 +225,13 @@ def build_parser() -> argparse.ArgumentParser:
     audit_parser.add_argument("record_ref", help="record_id")
     audit_parser.add_argument("--json", action="store_true", help="JSON 形式で出力する")
 
+    check_parser = subparsers.add_parser("check", help="ログインや接続確認の結果を記録する")
+    check_parser.add_argument("record_ref", help="record_id または alias")
+    check_parser.add_argument("--status", required=True, choices=[status.value for status in CheckStatus], help="確認結果")
+    check_parser.add_argument("--by", required=True, help="確認者")
+    check_parser.add_argument("--note", default="", help="確認メモ")
+    check_parser.add_argument("--at", help="確認日時。ISO 8601 形式、省略時は現在時刻")
+
     return parser
 
 
@@ -248,6 +261,7 @@ def dispatch(args: argparse.Namespace) -> int:
         "revoke": lambda: _handle_revoke(args, store),
         "due": lambda: _handle_due(args, store),
         "audit": lambda: _handle_audit(args, store),
+        "check": lambda: _handle_check(args, store),
     }
     handler = handlers.get(args.command)
     if handler is None:
@@ -448,6 +462,11 @@ def _handle_add_login(args: argparse.Namespace, store: FileVaultStore) -> int:
         user_code=args.user_code,
         username=args.username,
         password=password,
+        auth_flow=args.auth_flow,
+        otp_contact=args.otp_contact,
+        otp_owner=args.otp_owner,
+        recovery_url=args.recovery_url,
+        recovery_note=args.recovery_note,
         mfa_note=args.mfa_note,
         login_note=args.login_note,
         fingerprint=_fingerprint(password),
@@ -665,6 +684,10 @@ def _handle_audit(args: argparse.Namespace, store: FileVaultStore) -> int:
         "created_at": record.created_at.isoformat(),
         "updated_at": record.updated_at.isoformat(),
         "last_verified_at": record.last_verified_at.isoformat() if record.last_verified_at else None,
+        "last_tested_at": record.last_tested_at.isoformat() if record.last_tested_at else None,
+        "last_tested_by": record.last_tested_by,
+        "last_test_status": record.last_test_status.value,
+        "last_test_note": record.last_test_note,
         "revoked_at": record.revoked_at.isoformat() if record.revoked_at else None,
         "owner": record.owner,
         "fingerprint": record.fingerprint,
@@ -676,6 +699,32 @@ def _handle_audit(args: argparse.Namespace, store: FileVaultStore) -> int:
 
     for key, value in payload.items():
         print(f"{key}: {value}")
+    return EXIT_OK
+
+
+def _handle_check(args: argparse.Namespace, store: FileVaultStore) -> int:
+    document, master_password = _load_document_with_password(store, allow_prompt=True)
+    if document is None or master_password is None:
+        return EXIT_LOCKED
+
+    record = document.get_record(args.record_ref)
+    if record is None:
+        print(f"key not found: {args.record_ref}", file=sys.stderr)
+        return EXIT_NOT_FOUND
+
+    checked_at = datetime.fromisoformat(args.at) if args.at else datetime.now(UTC)
+    check_status = CheckStatus(args.status)
+    record.last_tested_at = checked_at
+    record.last_tested_by = args.by
+    record.last_test_status = check_status
+    record.last_test_note = args.note
+    if check_status is CheckStatus.OK:
+        record.last_verified_at = checked_at
+    record.updated_at = checked_at
+
+    document.upsert_record(record)
+    store.save_document(document, master_password)
+    print(f"Checked: {record.record_id} ({check_status.value})")
     return EXIT_OK
 
 
@@ -993,6 +1042,13 @@ def _display_pairs(record: SecretRecord, *, reveal_password: bool) -> list[tuple
                 ("Company code", record.company_code or ""),
                 ("User code", record.user_code or ""),
                 ("Username", record.username or ""),
+                ("Auth flow", record.auth_flow or ""),
+                ("OTP contact", record.otp_contact or ""),
+                ("OTP owner", record.otp_owner or ""),
+                ("Recovery URL", record.recovery_url or ""),
+                ("Recovery note", record.recovery_note or ""),
+                ("MFA note", record.mfa_note or ""),
+                ("Login note", record.login_note or ""),
                 ("Password", record.password if reveal_password else "********"),
             ]
         )
@@ -1025,6 +1081,10 @@ def _display_pairs(record: SecretRecord, *, reveal_password: bool) -> list[tuple
 
     pairs.extend(
         [
+            ("Last test status", record.last_test_status.value),
+            ("Last tested at", _display_datetime(record.last_tested_at)),
+            ("Last tested by", record.last_tested_by or ""),
+            ("Last test note", record.last_test_note),
             ("Created at", _display_datetime(record.created_at)),
             ("Updated at", _display_datetime(record.updated_at)),
         ]

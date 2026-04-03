@@ -33,6 +33,13 @@ FIELD_SPECS: dict[RecordType, dict[str, FieldSpec]] = {
         "user_code": FieldSpec("User Code", "text"),
         "username": FieldSpec("Username", "text"),
         "password": FieldSpec("Password", "password", secret=True),
+        "auth_flow": FieldSpec("Auth Flow", "text"),
+        "otp_contact": FieldSpec("OTP Contact", "text"),
+        "otp_owner": FieldSpec("OTP Owner", "text"),
+        "recovery_url": FieldSpec("Recovery URL", "text"),
+        "recovery_note": FieldSpec("Recovery Note", "text"),
+        "mfa_note": FieldSpec("MFA Note", "text"),
+        "login_note": FieldSpec("Login Note", "text"),
     },
     RecordType.MAILBOX_ACCOUNT: {
         "host": FieldSpec("Host", "text"),
@@ -135,7 +142,26 @@ def resolve_requirement_record(document: VaultDocument, requirement: CredentialR
         record = document.get_record(record_ref)
         if record is not None:
             return record
-    return None
+
+    matched_records: list[tuple[tuple[int, int], SecretRecord]] = []
+    for record in document.list_records():
+        score = _metadata_match_score(record, requirement)
+        if score is not None:
+            matched_records.append((score, record))
+
+    if not matched_records:
+        return None
+
+    matched_records.sort(key=lambda item: item[0], reverse=True)
+    best_score = matched_records[0][0]
+    if best_score[0] <= 0:
+        return None
+
+    best_records = [record for score, record in matched_records if score == best_score]
+    if len(best_records) != 1:
+        return None
+
+    return best_records[0]
 
 
 def sync_requirement_aliases(document: VaultDocument, requirements: list[CredentialRequirement]) -> bool:
@@ -273,3 +299,80 @@ def _require_str(data: dict[str, Any], key: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{key} は空でない文字列である必要があります。")
     return value.strip()
+
+
+def _metadata_match_score(record: SecretRecord, requirement: CredentialRequirement) -> tuple[int, int] | None:
+    if record.record_type is not requirement.record_type:
+        return None
+
+    strong_matches = 0
+    total_matches = 0
+
+    for field_name, expected_value in requirement.record_data.items():
+        if is_missing_value(expected_value):
+            continue
+
+        if field_name == "context_refs":
+            required_refs = {str(value) for value in expected_value if str(value).strip()}
+            if not required_refs:
+                continue
+            if not required_refs.issubset(set(record.context_refs)):
+                return None
+            strong_matches += 1
+            total_matches += 1
+            continue
+
+        actual_value = record_field_value(record, field_name)
+        if not _metadata_values_equal(actual_value, expected_value):
+            return None
+
+        total_matches += 1
+        if field_name in _strong_requirement_fields(record.record_type):
+            strong_matches += 1
+
+    return (strong_matches, total_matches)
+
+
+def _metadata_values_equal(actual_value: Any, expected_value: Any) -> bool:
+    if actual_value is None:
+        return False
+    if isinstance(actual_value, str) and isinstance(expected_value, str):
+        return actual_value.strip() == expected_value.strip()
+    return actual_value == expected_value
+
+
+def _strong_requirement_fields(record_type: RecordType) -> set[str]:
+    strong_fields = {
+        "entity_id",
+        "department_id",
+        "account_label",
+        "usage_purpose",
+        "secret_key_name",
+        "environment",
+        "scope",
+        "issuer",
+        "login_url",
+        "tenant_code",
+        "company_code",
+        "user_code",
+        "username",
+        "host",
+        "port",
+        "mailbox_name",
+        "from_address",
+        "provider",
+        "consumer",
+        "transport_mode",
+    }
+
+    if record_type is RecordType.API_SECRET:
+        return strong_fields | {"secret_key_name"}
+    if record_type is RecordType.WEB_LOGIN:
+        return strong_fields | {"login_url", "username", "company_code", "user_code"}
+    if record_type is RecordType.MAILBOX_ACCOUNT:
+        return strong_fields | {"host", "port", "username", "mailbox_name"}
+    if record_type is RecordType.SMTP_ACCOUNT:
+        return strong_fields | {"host", "port", "username", "from_address"}
+    if record_type is RecordType.MACHINE_SECRET:
+        return strong_fields | {"provider", "consumer", "transport_mode"}
+    return strong_fields

@@ -108,3 +108,66 @@ def test_cli_add_mailbox_and_get_password(monkeypatch, tmp_path, capsys) -> None
 
     output = capsys.readouterr()
     assert "mailbox-password" in output.out
+
+
+def test_cli_check_updates_last_test_status(monkeypatch, tmp_path, capsys) -> None:
+    monkeypatch.setenv("CREDENTIAL_VAULT_ROOT", str(tmp_path))
+    monkeypatch.setenv("CREDENTIAL_VAULT_MASTER_PASSWORD", "master-password")
+    monkeypatch.setenv("CREDENTIAL_VAULT_MASTER_PASSWORD_CONFIRM", "master-password")
+    monkeypatch.setattr("sys.stdin", io.StringIO("secret-password\n"))
+
+    assert main(["init"]) == 0
+    assert (
+        main(
+            [
+                "add",
+                "login",
+                "freee-admin",
+                "--entity-id",
+                "C02",
+                "--account-label",
+                "経理管理者",
+                "--login-url",
+                "https://accounts.secure.freee.co.jp/",
+                "--username",
+                "admin@example.com",
+                "--auth-flow",
+                "password_plus_totp",
+                "--otp-owner",
+                "経理責任者",
+                "--stdin",
+            ]
+        )
+        == 0
+    )
+
+    captured = capsys.readouterr()
+    record_id = next(
+        line.split(": ", 1)[1]
+        for line in captured.out.splitlines()
+        if line.startswith("Saved: rec_web_")
+    )
+
+    assert (
+        main(
+            [
+                "check",
+                record_id,
+                "--status",
+                "ok",
+                "--by",
+                "kouhe",
+                "--note",
+                "TOTP と会社コードでログイン成功",
+                "--at",
+                "2026-04-03T10:15:00+09:00",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert main(["audit", record_id, "--json"]) == 0
+    output = capsys.readouterr()
+    assert '"last_test_status": "ok"' in output.out
+    assert '"last_tested_by": "kouhe"' in output.out

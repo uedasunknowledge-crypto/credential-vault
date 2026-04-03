@@ -95,3 +95,70 @@ def test_cli_ensure_returns_ok_after_mailbox_record_is_added(monkeypatch, tmp_pa
 
     output = capsys.readouterr()
     assert "All required credentials are present." in output.out
+
+
+def test_cli_ensure_syncs_record_ref_alias_from_metadata_match(monkeypatch, tmp_path, capsys) -> None:
+    spec_path = tmp_path / "requirements.yaml"
+    spec_path.write_text(
+        '\n'.join(
+            [
+                "records:",
+                "  - record_ref: MAILBOX_PRIMARY",
+                "    record_type: mailbox_account",
+                "    required_fields: [host, port, protocol, username, password, use_ssl]",
+                "    record:",
+                "      service_name: mail-invoice",
+                "      entity_id: C02",
+                "      account_label: 請求書受信POP",
+                "      usage_purpose: Bill One 請求書取込",
+                "      context_refs: [project:mail-invoice]",
+                "      protocol: pop3",
+                "      use_ssl: true",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setenv("CREDENTIAL_VAULT_ROOT", str(tmp_path))
+    monkeypatch.setenv("CREDENTIAL_VAULT_MASTER_PASSWORD", "master-password")
+    monkeypatch.setenv("CREDENTIAL_VAULT_MASTER_PASSWORD_CONFIRM", "master-password")
+    monkeypatch.setattr("sys.stdin", io.StringIO("mailbox-password\n"))
+
+    assert main(["init"]) == 0
+    assert (
+        main(
+            [
+                "add",
+                "mailbox",
+                "mail-invoice",
+                "--entity-id",
+                "C02",
+                "--account-label",
+                "請求書受信POP",
+                "--usage-purpose",
+                "Bill One 請求書取込",
+                "--host",
+                "mail.example.com",
+                "--port",
+                "995",
+                "--protocol",
+                "pop3",
+                "--username",
+                "billing@example.com",
+                "--context-ref",
+                "project:mail-invoice",
+                "--stdin",
+            ]
+        )
+        == 0
+    )
+    capsys.readouterr()
+
+    assert main(["ensure", "--spec", str(spec_path)]) == 0
+    ensure_output = capsys.readouterr()
+    assert "All required credentials are present." in ensure_output.out
+
+    assert main(["get", "MAILBOX_PRIMARY", "--field", "username"]) == 0
+    get_output = capsys.readouterr()
+    assert "billing@example.com" in get_output.out

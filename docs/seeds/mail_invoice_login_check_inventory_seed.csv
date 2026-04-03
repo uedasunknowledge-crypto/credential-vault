@@ -1,0 +1,7 @@
+﻿vault_record_ref,checked_at,checked_by,target_kind,check_status,check_method,result_summary,next_action
+VISA_VPASS,2026-04-02,inventory-import,web_login,ok,scheduled_login,headlessで2店舗連続取得とDrive保存成功,Task Scheduler 登録と月次運用確認
+candidate:FUJIFILM_BI_DIRECT,2026-03-27,inventory-import,web_login,attention,mail_notice_login,ruleとportal_downloader骨格あり,実サイト疎通とDOM調整
+candidate:SAGAWA_SMART_CLUB,2026-04-02,inventory-import,web_login,attention,mail_notice_login,portal_downloader受け皿と設定例を追加,実メール取得と実サイト疎通
+candidate:SANICLEAN,2026-04-02,inventory-import,web_login,attention,mail_notice_login,P9対象候補として言及あり,分類確定とルール設計
+candidate:GMO,2026-04-02,inventory-import,web_login,attention,scheduled_login,P9対象候補として言及あり,対象画面と周期の確認
+candidate:JCB,2026-04-02,inventory-import,web_login,attention,scheduled_login,P9対象候補として言及あり,対象画面と周期の確認

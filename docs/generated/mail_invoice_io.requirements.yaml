@@ -1,0 +1,61 @@
+version: 1
+records:
+- record_ref: MAILBOX_PRIMARY
+  record_type: mailbox_account
+  required_fields:
+  - password
+  - host
+  - port
+  - username
+  record:
+    service_name: mail-invoice
+    account_label: 請求書受信POP
+    usage_purpose: Bill One 請求書取込
+    classification: P2a
+    context_refs:
+    - project:mail-invoice
+    - tool:billone
+    protocol: pop3
+    use_ssl: true
+  rotation_days: 90
+- record_ref: SMTP_PRIMARY
+  record_type: smtp_account
+  required_fields:
+  - password
+  - host
+  - port
+  - username
+  - from_address
+  record:
+    service_name: mail-invoice
+    account_label: Bill One 配送SMTP
+    usage_purpose: Bill One 配送
+    classification: P2a
+    context_refs:
+    - project:mail-invoice
+    - tool:billone
+    use_ssl: false
+    starttls: true
+  rotation_days: 90
+- record_ref: VISA_VPASS
+  record_type: web_login
+  required_fields:
+  - password
+  - username
+  - auth_flow
+  - otp_owner
+  record:
+    service_name: visa-vpass
+    account_label: VISA Vpass
+    usage_purpose: 売上明細取得
+    classification: P2a
+    context_refs:
+    - project:mail-invoice
+    - tool:vpass
+    - vendor:VISA_VPASS
+    login_url: https://www3.vpass.ne.jp/kamei/top/index.jsp?cc=009
+    recovery_url: https://www3.vpass.ne.jp/kamei/top/index.jsp?cc=009
+    recovery_note: Task Scheduler 登録と月次運用確認
+    mfa_note: 追加認証要否は要確認
+    login_note: run_vpass_schedule.py と state 管理あり
+  rotation_days: 90

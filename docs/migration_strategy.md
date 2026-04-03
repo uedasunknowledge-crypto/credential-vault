@@ -16,6 +16,7 @@
 - まずは `credential-vault` へ登録を始める
 - 既存のスプシや Chatwork はまだ正本扱いのまま残す
 - 実行時だけ `credential-vault` を参照する経路を増やす
+- requirement 側の `record_ref` alias が未整備でも、metadata が一意に合う既存 record は `ensure` が拾って alias を同期する
 
 この段階のゴール:
 
@@ -103,6 +104,12 @@
 - `tool:billone`
 - `service_scope:invoice-fetch`
 
+移行台帳は、少なくとも次の 3 つに分けると安全です。
+
+- `資格情報台帳`: source locator と credential metadata
+- `認証手順台帳`: OTP / MFA / recovery の正式手順
+- `ログイン確認履歴`: 接続確認や実ログイン確認の時系列履歴
+
 ## 6. バックアップ方針
 
 現時点では、バックアップ未整備のまま「唯一の正本」へ一気に寄せるのは避けます。
@@ -124,6 +131,6 @@
 
 ## 8. 次にやること
 
-- `mailbox_account` / `smtp_account` を使った登録フローを増やす
-- `mail-invoice-processor` 側の template を正式配置する
-- 不足 credential があるときに入力フォームへ誘導する仕組みを追加する
+- 実 credential を使わない形で localhost 入力フォームの手動確認手順を固める
+- 既存のスプシや Chatwork から移す候補を棚卸しし、`service_name` / `entity_id` / `account_label` / `context_refs` を先に整える
+- 安全なバックアップ先が用意できるまで、どの credential を旧正本にも残すかを運用ルール化する

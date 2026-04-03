@@ -1,0 +1,7 @@
+﻿vault_record_ref,service_name,account_label,auth_flow,otp_contact,otp_owner,required_device,recovery_url,recovery_note,mfa_note,login_note
+VISA_VPASS,visa-vpass,VISA Vpass,,,,Edge または Chrome,https://www3.vpass.ne.jp/kamei/top/index.jsp?cc=009,Task Scheduler 登録と月次運用確認,追加認証要否は要確認,run_vpass_schedule.py と state 管理あり
+candidate:FUJIFILM_BI_DIRECT,fujifilm-bi-direct,富士フイルムBIダイレクト,,,,Edge または Chrome,https://direct-fb.fujifilm.com/ap1/ebilling/invoicelist,実サイト疎通とDOM調整,,url_downloader の login_required 経路までは配線済み
+candidate:SAGAWA_SMART_CLUB,sagawa-smart-club,佐川急便スマートクラブ,,,,Edge または Chrome,https://www.e-service.sagawa-exp.co.jp/portal/do/login/show?fr=bs,実メール取得と実サイト疎通,,実ルールは examples のみで local.runtime には未設定
+candidate:SANICLEAN,saniclean,サニクリーン,,,,,,分類確定とルール設計,,実メールも実装も未着手
+candidate:GMO,gmo,GMO,,,,,,対象画面と周期の確認,OTPなし前提の候補,OTPなし前提の候補
+candidate:JCB,jcb,JCB,,,,,,対象画面と周期の確認,OTP対応済み候補として記録あり,OTP対応済み候補として記録あり

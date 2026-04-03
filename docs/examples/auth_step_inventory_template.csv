@@ -1,0 +1,3 @@
+vault_record_ref,service_name,account_label,auth_flow,otp_contact,otp_owner,required_device,recovery_url,recovery_note,mfa_note,login_note
+MAILBOX_PRIMARY,mail-invoice,請求書受信POP,password_only,,,,,,POP3 受信専用。管理画面の 2FA は別管理,
+rec_web_001,freee-admin,経理管理者,password_plus_totp,Google Authenticator,経理責任者,責任者スマートフォン,https://accounts.secure.freee.co.jp/password_resets/new,再設定は責任者確認後のみ実施,会社コード入力後に TOTP が必要,ログイン後に月次締めメニューを確認

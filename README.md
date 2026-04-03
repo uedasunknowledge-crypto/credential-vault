@@ -20,9 +20,12 @@ NH1 上で認証情報を安全に一元管理するためのローカル vault 
 
 - [初期設計](/C:/Users/kouhe/credential-vault/docs/architecture.md)
 - [拡張要件と管理モデル](/C:/Users/kouhe/credential-vault/docs/expanded_requirements.md)
+- [人間向けインターフェイスと認証台帳](/C:/Users/kouhe/credential-vault/docs/human_interface_inventory.md)
+- [inventory 入出力テスト](/C:/Users/kouhe/credential-vault/docs/inventory_io_test.md)
 - [段階移行とバックアップ方針](/C:/Users/kouhe/credential-vault/docs/migration_strategy.md)
 - [business-master-sync 連携案](/C:/Users/kouhe/credential-vault/docs/business_master_sync_contract.md)
 - [mail-invoice-processor 連携ガイド](/C:/Users/kouhe/credential-vault/docs/mail_invoice_processor_integration.md)
+- [mail-invoice 移行 seed](/C:/Users/kouhe/credential-vault/docs/mail_invoice_inventory_seed.md)
 - [CLI利用イメージ](/C:/Users/kouhe/credential-vault/docs/usage_examples.md)
 
 ## 想定配置
@@ -43,9 +46,16 @@ Windows 側ではリポジトリ直下の `.venv` を使って開発できます
 .\.venv\Scripts\python.exe -m pytest
 .\secrets.ps1 status
 .\secrets.ps1 init
+.\secrets.ps1 check MAILBOX_PRIMARY --status ok --by kouhe --note "接続確認済み"
+.\.venv\Scripts\python.exe scripts\build_mail_invoice_inventory_workspace.py
+.\.venv\Scripts\python.exe scripts\review_mail_invoice_inventory_seed.py
+.\.venv\Scripts\python.exe scripts\build_mail_invoice_io_bundle.py
 ```
 
 `secrets.ps1` と `secrets.cmd` は、`.venv` の Python から `credential_vault.cli` を直接起動する開発用ラッパーです。
+
+`docs/overrides/*.csv` には `fill_priority` と `fill_hint` が入り、移行時にどの行から埋めるべきかを先に見られます。実際の review は `docs/working/*.csv` を見ます。
+`docs/generated/mail_invoice_io.requirements.yaml` と `docs/generated/mail_invoice_io.template.yaml` を作ると、localhost フォーム入力と render 出力をまとめて試せます。
 
 ## mail-invoice-processor 連携
 
@@ -62,12 +72,14 @@ runtime YAML だけを生成して確認したい場合は次を使います。
 .\scripts\render_mail_invoice_processor_runtime.ps1
 ```
 
-`mail-invoice-processor\config\local.runtime.requirements.yaml` が存在する場合は、wrapper が実行前に `secrets ensure` を呼びます。不足 credential があると localhost の入力フォーム URL を出して、そのまま vault へ保存できます。
+`mail-invoice-processor\config\local.runtime.requirements.yaml` が存在する場合は、wrapper が実行前に `secrets ensure` を呼びます。不足 credential があると localhost の入力フォーム URL を出して、そのまま vault へ保存できます。既存 record に `MAILBOX_PRIMARY` のような alias がまだ無くても、`service_name` `entity_id` `account_label` `context_refs` などの metadata が一意に合えば自動で既存 record を拾って alias を同期します。
+
+`web_login` では `auth_flow` `otp_contact` `otp_owner` `recovery_url` `recovery_note` を持てるので、OTP や二重認証の正式な運用手順も秘密値と紐づけて管理できます。`secrets check` でログインや接続確認の最新結果を記録し、履歴そのものは `docs/examples/login_check_inventory_template.csv` のような非秘密台帳へ残す運用が安全です。
 
 詳細は [mail_invoice_processor_integration.md](/C:/Users/kouhe/credential-vault/docs/mail_invoice_processor_integration.md) を参照してください。
 
 ## 現在のローカル状態
 
 - 2026-04-02 時点で Windows 開発環境の `.venv` を整備済み
-- `.\.venv\Scripts\python.exe -m pytest` で 14 件のテストが通過
+- `.\.venv\Scripts\python.exe -m pytest` で 35 件のテストが通過
 - `scrypt` は Windows/OpenSSL の既定メモリ制限を超えないよう補正済み
